@@ -16,6 +16,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -55,7 +56,7 @@ public class LibraryEventControllerUnitTest {
     }
 
     @Test
-    void postLibraryEvent_4xxx() throws Exception {
+    void postLibraryEvent_4XX() throws Exception {
 
         Book book = Book.builder()
                 .bookId(null)
@@ -80,4 +81,57 @@ public class LibraryEventControllerUnitTest {
                 .andExpect(status().is4xxClientError())
                 .andExpect(content().string(expectedErrorMessage));
     }
+
+
+    @Test
+    void putLibraryEvent() throws Exception {
+        Book book = Book.builder()
+                .bookId(123)
+                .bookAuthor("Dileep")
+                .bookName("Kafka using Spring Boot")
+                .build();
+
+        LibraryEvent libraryEvent = LibraryEvent.builder()
+                .libraryEventId(123)
+                .book(book)
+                .build();
+
+        String json = objectMapper.writeValueAsString(libraryEvent);
+        when(libraryEventProducer.sendLibraryApproach2(isA(LibraryEvent.class))).thenReturn(null);
+
+        mockMvc.perform(put("/v1/libraryevent")
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void putLibraryEvent_4XX() throws Exception {
+
+        Book book = Book.builder()
+                .bookId(123)
+                .bookAuthor("Dileep")
+                .bookName("Kafka using Spring Boot")
+                .build();
+
+        LibraryEvent libraryEvent = LibraryEvent.builder()
+                .libraryEventId(null)
+                .book(book)
+                .build();
+
+        String json = objectMapper.writeValueAsString(libraryEvent);
+
+        when(libraryEventProducer.sendLibraryApproach2(isA(LibraryEvent.class))).thenReturn(null);
+
+        String expectedErrorMessage = "please pass the Library Event Id";
+
+        mockMvc.perform(put("/v1/libraryevent")
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError())
+                .andExpect(content().string(expectedErrorMessage));
+    }
+
+
 }
