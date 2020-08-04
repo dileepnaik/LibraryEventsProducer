@@ -58,16 +58,16 @@ public class LibraryEventsControllerIntegrationTest {
     @Timeout(5)
     void postLibraryEvent() throws InterruptedException {
 
-        Book book = Book.builder()
-                .bookAuthor("Dileep Naik")
-                .bookId(123)
-                .bookName("Kafka using Spring Boot")
-                .build();
+            Book book = Book.builder()
+                    .bookAuthor("Dileep Naik")
+                    .bookId(123)
+                    .bookName("Kafka using Spring Boot")
+                    .build();
 
-        LibraryEvent libraryEvent = LibraryEvent.builder()
-                .libraryEventId(null)
-                .book(book)
-                .build();
+            LibraryEvent libraryEvent = LibraryEvent.builder()
+                    .libraryEventId(null)
+                    .book(book)
+                    .build();
 
         HttpHeaders httpHeaders = new HttpHeaders();
 
@@ -88,4 +88,41 @@ public class LibraryEventsControllerIntegrationTest {
         String value = consumerRecord.value();
         assertEquals(expectedRecord, value);
     }
+
+
+    @Test
+    @Timeout(5)
+    void putLibraryEvent() throws InterruptedException {
+
+        Book book = Book.builder()
+                .bookAuthor("Dileep Naik")
+                .bookId(123)
+                .bookName("Kafka using Spring Boot")
+                .build();
+
+        LibraryEvent libraryEvent = LibraryEvent.builder()
+                .libraryEventId(123)
+                .book(book)
+                .build();
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+
+        httpHeaders.set("content-type", MediaType.APPLICATION_JSON.toString());
+        HttpEntity<LibraryEvent> libraryEventHttpEntity = new HttpEntity<>(libraryEvent, httpHeaders);
+
+        ResponseEntity<LibraryEvent> responseEntity = testRestTemplate.exchange("/v1/libraryevent", HttpMethod.PUT, libraryEventHttpEntity, LibraryEvent.class);
+
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+        ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, "library-events");
+
+        //Sleeping as its Async -> Simple but not best way of solving
+        //can Use @Timeout
+        //Thread.sleep(3000);
+
+        String expectedRecord = "{\"libraryEventId\":123,\"libraryEventType\":\"UPDATE\",\"book\":{\"bookId\":123,\"bookName\":\"Kafka using Spring Boot\",\"bookAuthor\":\"Dileep Naik\"}}";
+        String value = consumerRecord.value();
+        assertEquals(expectedRecord, value);
+    }
+
 }
